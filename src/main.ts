@@ -18,7 +18,9 @@ function isActress( dati : unknown) : dati is Actress{
       "image" in  dati &&
       typeof dati.image === "string" &&
       "most_famous_movies" in dati &&
-      Array.isArray(dati.most_famous_movies) &&
+      dati.most_famous_movies instanceof Array &&
+      dati.most_famous_movies.length === 3 &&
+      dati.most_famous_movies.every((m) => typeof m === "string") &&
       "awards" in dati &&
       typeof dati.awards === "string" &&
       "nationality" in dati && 
@@ -73,18 +75,24 @@ getActress(2)
 
     const actresses :unknown = await response.json()
 
-     if (Array.isArray(actresses)){
+     if (!(actresses instanceof Array)){
+         throw new Error("Formato dei dati non validi")
       
-      return actresses.filter(isActress)
      }
+
+     const validActresses : Actress[] = actresses.filter(isActress)
+
+     return validActresses 
 
     }catch(errore) {
       if(errore instanceof Error){
         console.error("Errore nel recupero dei dati" , errore.message)
       }
+
+      return[]
     }
 
-    return[]
+    
   }
 
   getAllActresses()
@@ -96,3 +104,24 @@ getActress(2)
     }
   })
   .catch(err => console.error(err));
+
+  async function  getActresses(ids : number[]) : Promise <(Actress| null) []>{
+    try{
+      const promises = ids.map((id) => getActress(id))
+      const result = await Promise.all(promises)
+      return result
+
+    }catch(errore){
+     if(errore instanceof Error){
+      console.error("Errore", errore.message)
+     }
+
+     return []
+    }
+  }
+
+  const ids : number[] = [2,3,5]
+
+  getActresses(ids)
+  .then(actresses => console.log(actresses))
+  .catch(error => console.error(error))
